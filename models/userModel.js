@@ -1,4 +1,5 @@
 import database from "../database/connection.js";
+import bcrypt from "bcryptjs";
 
 const createUsertableSQL = `
     CREATE TABLE IF NOT EXISTS users (
@@ -6,33 +7,37 @@ const createUsertableSQL = `
         username VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        isAdmin BOOLEAN DEFAULT FALSE
     );
 `;
 
 async function createUserTable() {
-    try {
-        await database.query(createUsertableSQL);
-        console.log("User table created successfully");
-    } catch (error) {
-        console.error("Error creating user table", error);
-        throw error;
-    }
-};
+  try {
+    await database.query(createUsertableSQL);
+    console.log("User table created successfully");
+  } catch (error) {
+    console.error("Error creating user table", error);
+    throw error;
+  }
+}
 
-async function createUser(username, password, email) {
-    const result = await database.query(
-        "INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING *",
-        [username, hashedPassword, email]
-    );
-    return result.rows[0];
-};
+async function findUserByUserId(req, res) {
+  const selectUserSQL = `SELECT * FROM users WHERE user_id = $1;`;
 
-async function findUserByEmail(email) {
-    const result = await database.query("SELECT * FROM users WHERE email = $1", [email]);
-    return result.rows[0];
-};
+  try {
+    const resDB = await database.query(selectUserSQL, [req.body.user_id]);
+    const user = resDB.rows[0];
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error, please try again later" });
+  }
+}
 
-const userModel = { createUser, findUserByEmail, createUserTable };
+const userModel = {
+  createUserTable,
+  findUserByUserId,
+};
 
 export default userModel;

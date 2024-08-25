@@ -20,76 +20,8 @@ async function createExerciseTable() {
   }
 }
 
-// Add a new exercise
-async function addExercise(exerciseName, exerciseType) {
-  const queryText = `
-        INSERT INTO exercises (exercise_name, exercise_type)
-        VALUES ($1, $2)
-        RETURNING *;
-    `;
-
-  const values = [exerciseName, exerciseType];
-
-  try {
-    const result = await pool.query(queryText, values);
-    return result.rows[0];
-  } catch (error) {
-    console.error("Error adding exercise:", error);
-    throw error;
-  }
-}
-
-// Get all exercises
-async function getExercises() {
-  const queryText = `
-        SELECT * FROM exercises;
-    `;
-
-  try {
-    const result = await pool.query(queryText);
-    return result.rows;
-  } catch (error) {
-    console.error("Error retrieving exercises:", error);
-    throw error;
-  }
-}
-
-// Get a single exercise by ID
-async function getExerciseById(exerciseId) {
-  const queryText = `
-        SELECT * FROM exercises WHERE exercise_id = $1;
-    `;
-
-  try {
-    const result = await pool.query(queryText, [exerciseId]);
-    return result.rows[0];
-  } catch (error) {
-    console.error("Error retrieving exercise:", error);
-    throw error;
-  }
-}
-
-// Delete an exercise by ID
-async function deleteExercise(exerciseId) {
-  const queryText = `
-        DELETE FROM exercises WHERE exercise_id = $1 RETURNING *;
-    `;
-
-  try {
-    const result = await pool.query(queryText, [exerciseId]);
-    return result.rows[0];
-  } catch (error) {
-    console.error("Error deleting exercise:", error);
-    throw error;
-  }
-}
-
 const exerciseModel = {
   createExerciseTable,
-  addExercise,
-  getExercises,
-  getExerciseById,
-  deleteExercise,
 };
 
 export default exerciseModel;

@@ -13,12 +13,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 app.get("/", (req, res) => {
-    res.send("Hello World!");
+  const data = {
+    message: "Hello World!",
+    status: 200,
+  };
+  res.status(200).json(data);
 });
 
-app.use("/api", routes);
+app.post("/", (req, res) => {
+  const body = req.body;
+  const data = {
+    message: "Hello World!",
+    data: body,
+  };
+  res.status(200).json(data);
+});
+
+app.use("/", routes);
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
-

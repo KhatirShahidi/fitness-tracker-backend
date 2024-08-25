@@ -20,21 +20,8 @@ async function createWorkoutTable() {
         console.error("Error creating workout table", error);
         throw error;
     }
-};
+}
 
-async function logWorkout(userId, exerciseId, sets, reps, weight, workoutDate) {
-    const result = await database.query(
-        "INSERT INTO workout_logs (user_id, exercise_id, sets, reps, weight, workout_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-        [userId, exerciseId, sets, reps, weight, workoutDate]
-    );
-    return result.rows[0];
-};
-
-async function getUserWorkouts(userId) {
-    const result = await database.query("SELECT * FROM workout_logs WHERE user_id = $1", [userId]);
-    return result.rows;
-};
-
-const workoutModel = { logWorkout, getUserWorkouts, createWorkoutTable };
+const workoutModel = { createWorkoutTable };
 
 export default workoutModel;

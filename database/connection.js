@@ -15,14 +15,6 @@ const database = new Pool({
     port: process.env.DB_PORT,
 });
 
-// const database = new Pool({
-//   user: "postgres",
-//   password: "abcdef",
-//   host: "127.0.0.1",
-//   port: 5432,
-//   database: "fitness-tracker-backend",
-// });
-
 async function initializeDatabase() {
   try {
     await database.connect();
