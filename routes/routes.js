@@ -11,12 +11,12 @@ router.post('/login', authController.loginUser);
 
 router.post('/workouts', auth, workoutController.addWorkout);
 router.get('/workouts', auth, workoutController.getWorkouts);
+router.put('/workouts/:log_id', auth, workoutController.editWorkout);
+router.delete('/workouts/:log_id', auth, workoutController.deleteWorkout);
 
 router.post('/exercise', auth, exerciseController.createExercise);
 router.get('/exercise/:exercise_id', auth, exerciseController.viewExercise);
 router.delete('/exercise/:exercise_id', auth, exerciseController.deleteExercise);
 router.put('/exercise/:exercise_id', auth, exerciseController.updateExercise);
-
-
 
 export default router;

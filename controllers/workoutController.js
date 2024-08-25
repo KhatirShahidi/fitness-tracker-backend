@@ -64,6 +64,47 @@ async function getWorkouts(req, res) {
     }
 }
 
-const workoutController = { addWorkout, getWorkouts };
+async function editWorkout(req, res) {
+    const { log_id } = req.params;
+    const { exercise_id, sets, reps, weight } = req.body;
+    const user_id = req.user_id;
+
+    const editWorkoutSQL = `
+        UPDATE workout_logs
+        SET exercise_id = $1, sets = $2, reps = $3, weight = $4
+        WHERE log_id = $5 AND user_id = $6
+        RETURNING *;
+    `;
+
+    try {
+        const resDB = await database.query(editWorkoutSQL, [exercise_id, sets, reps, weight, log_id, user_id]);
+        const updatedWorkout = resDB.rows[0];
+        res.status(200).json({ updatedWorkout });
+    } catch (error) {
+        console.error('Error editing workout:', error);
+        res.status(500).json({ message: 'Server error, please try again later' });
+    }
+}
+
+async function deleteWorkout(req, res) {
+    const { log_id } = req.params;
+    const user_id = req.user_id;
+
+    const deleteWorkoutSQL = `
+        DELETE FROM workout_logs
+        WHERE log_id = $1 AND user_id = $2
+        RETURNING *;
+    `;
+
+    try {
+        const resDB = await database.query(deleteWorkoutSQL, [log_id, user_id]);
+        const deletedWorkout = resDB.rows[0];
+        res.status(200).json({ deletedWorkout });
+    } catch (error) {
+        console.error('Error deleting workout:', error);
+        res.status(500).json({ message: 'Server error, please try again later' });
+    }
+}
+const workoutController = { addWorkout, getWorkouts, editWorkout, deleteWorkout };
 
 export default workoutController;
