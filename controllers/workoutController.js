@@ -52,17 +52,25 @@ async function addWorkout(req, res) {
 // Function to get all workouts for a user
 async function getWorkouts(req, res) {
     const user_id = req.user_id;
-    const getWorkoutsSQL = `SELECT * FROM workout_logs WHERE user_id = $1;`;
+    
+    // SQL query to join workout_logs with exercises to get exercise_name
+    const getWorkoutsSQL = `
+        SELECT wl.log_id, wl.user_id, wl.sets, wl.reps, wl.weight, wl.created_at, e.exercise_name
+        FROM workout_logs wl
+        JOIN exercises e ON wl.exercise_id = e.exercise_id
+        WHERE wl.user_id = $1;
+    `;
 
     try {
         const resDB = await database.query(getWorkoutsSQL, [user_id]);
-        const workouts = resDB.rows;
+        const workouts = resDB.rows;  // Rows now include exercise_name
         res.status(200).json({ workouts });
     } catch (error) {
         console.error('Error retrieving workouts:', error);
         res.status(500).json({ message: 'Server error, please try again later' });
     }
 }
+
 
 async function editWorkout(req, res) {
     const { log_id } = req.params;

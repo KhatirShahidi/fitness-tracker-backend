@@ -27,6 +27,24 @@ async function registerUser(req, res) {
     return res.status(400).json({ message: "Invalid email address" });
   }
 
+  // Check if email is already registered
+  const selectUserSQL = `SELECT * FROM users WHERE email = $1;`;
+  const user = await database.query(selectUserSQL, [email]);
+  if (user.rows.length > 0) {
+    return res.status(400).json({ message: "Email already registered" });
+  }
+
+  // Check if username is already taken
+  const selectUserByUsernameSQL = `SELECT * FROM users WHERE username = $1;`;
+  const userByUsername = await database.query(selectUserByUsernameSQL, [
+    username,
+  ]);
+  if (userByUsername.rows.length > 0) {
+    return res.status(400).json({ message: "Username already taken" });
+  }
+
+  
+
 
   // Hash the password
   const salt = await bcrypt.genSalt(10);

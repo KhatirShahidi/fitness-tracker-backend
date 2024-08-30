@@ -1,6 +1,6 @@
 import exerciseModel from '../models/exerciseModel.js';
 import database from '../database/connection.js';
-import isAdmin from '../middleware/isAdmin.js';
+// import isAdmin from '../middleware/isAdmin.js';
 
 // Function to create a new exercise
 async function createExercise(req, res) {
@@ -42,11 +42,11 @@ async function updateExercise(req, res) {
         WHERE exercise_id = $3 RETURNING *;
     `;
 
-    const isAdmin = await isAdmin(req, res);
+    // const isAdmin = await isAdmin(req, res);
 
-    if (!isAdmin) {
-        return res.status(403).json({ message: 'Access denied: Admins only' });
-    }
+    // if (!isAdmin) {
+    //     return res.status(403).json({ message: 'Access denied: Admins only' });
+    // }
 
     try {
         const resDB = await database.query(updateExerciseSQL, [exercise_name, exercise_type, exercise_id]);
@@ -109,9 +109,25 @@ async function viewExercise (req, res) {
     }
 }
 
+// Function to fetch all exercises
+async function getAllExercises(req, res) {
+    const getAllExercisesSQL = `
+        SELECT * FROM exercises ORDER BY exercise_name ASC;
+    `;
+
+    try {
+        const resDB = await database.query(getAllExercisesSQL);
+        const exercises = resDB.rows;  // Fetch all exercises
+        res.status(200).json(exercises);  // Send the exercises as a JSON response
+    } catch (error) {
+        console.error('Error fetching exercises:', error);
+        res.status(500).json({ message: 'Server error, please try again later' });
+    }
+}
 
 
 
-const exerciseController = { createExercise, updateExercise, deleteExercise, viewExercise };
+
+const exerciseController = { getAllExercises, createExercise, updateExercise, deleteExercise, viewExercise };
 
 export default exerciseController;
