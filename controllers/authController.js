@@ -16,12 +16,12 @@ async function registerUser(req, res) {
     return res.status(400).json({ message: "Please fill in all fields" });
   }
 
-    // Check if passwords match
+  // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
-    // Check if email is valid
+  // Check if email is valid
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!regex.test(email)) {
     return res.status(400).json({ message: "Invalid email address" });
@@ -42,9 +42,6 @@ async function registerUser(req, res) {
   if (userByUsername.rows.length > 0) {
     return res.status(400).json({ message: "Username already taken" });
   }
-
-  
-
 
   // Hash the password
   const salt = await bcrypt.genSalt(10);
@@ -128,7 +125,54 @@ async function loginUser(req, res) {
   }
 }
 
+async function findUserByUserId(req, res) {
+  const selectUserSQL = `SELECT * FROM users WHERE user_id = $1;`;
 
-const authController = { registerUser, loginUser };
+  try {
+    const resDB = await database.query(selectUserSQL, [req.user_id]);
+    return resDB.rows[0];
+
+    // res.status(200).json({ user: resDB.rows[0] });
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    throw error;
+  }
+}
+
+async function findUserByEmail(email) {
+  const selectUserSQL = `SELECT * FROM users WHERE email = $1;`;
+  try {
+    const resDB = await database.query(selectUserSQL, [email]);
+    return resDB.rows[0];
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    throw error;
+  }
+}
+
+async function getCurrentUser(req, res) {
+  const selectUserSQL = `SELECT * FROM users WHERE user_id = $1;`;
+  const user = await findUserByUserId(req, res);
+  const data = {
+    user_id: user.user_id,
+    username: user.username,
+    email: user.email,
+  }
+  try {
+    const resDB = await database.query(selectUserSQL, [req.user_id]);
+    return res.status(200).json({ user: resDB.rows[0] });
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    throw error;
+  }
+}
+
+const authController = {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  findUserByEmail,
+  findUserByUserId,
+};
 
 export default authController;

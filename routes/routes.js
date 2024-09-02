@@ -10,6 +10,8 @@ const router = express.Router();
 router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 
+router.get("/me", auth, authController.getCurrentUser); // Ensure 'auth' middleware is checking the JWT token
+
 router.post("/workouts", auth, workoutController.addWorkout);
 router.get("/workouts", auth, workoutController.getWorkouts);
 router.put("/workouts/:log_id", auth, workoutController.editWorkout);

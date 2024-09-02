@@ -5,11 +5,11 @@ import database from '../database/connection.js';
 // Function to add a new workout log
 async function addWorkout(req, res) {
     // Extract workout data and user identifier from the request body
-    const { exercise_id, sets, reps, weight } = req.body;
+    const { exercise_name, sets, reps, weight } = req.body;
     const user_id = req.user_id;  // Extracted from the JWT token by middleware
 
     // Check if all required fields are provided
-    if (!user_id || !exercise_id || sets === undefined || reps === undefined || weight === undefined) {
+    if (!user_id || !exercise_name || sets === undefined || reps === undefined || weight === undefined) {
         return res.status(400).json({ message: 'Please provide complete workout data' });
     }
 
@@ -21,12 +21,18 @@ async function addWorkout(req, res) {
             return res.status(400).json({ message: 'Invalid user_id.' });
         }
 
-        // Check if the exercise_id exists in the exercises table
-        const checkExerciseSQL = `SELECT * FROM exercises WHERE exercise_id = $1`;
-        const exerciseResult = await database.query(checkExerciseSQL, [exercise_id]);
+        // Check if the exercise_name exists in the exercises table
+        const checkExerciseSQL = `SELECT exercise_id FROM exercises WHERE exercise_name = $1`;
+        let exerciseResult = await database.query(checkExerciseSQL, [exercise_name]);
+        let exercise_id;
 
+        // If exercise does not exist, create a new exercise
         if (exerciseResult.rows.length === 0) {
-            return res.status(400).json({ message: 'Invalid exercise_id.' });
+            const createExerciseSQL = `INSERT INTO exercises (exercise_name) VALUES ($1) RETURNING exercise_id`;
+            const newExercise = await database.query(createExerciseSQL, [exercise_name]);
+            exercise_id = newExercise.rows[0].exercise_id;
+        } else {
+            exercise_id = exerciseResult.rows[0].exercise_id;
         }
 
         // SQL query to insert workout log
