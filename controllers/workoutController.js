@@ -80,39 +80,45 @@ async function getWorkouts(req, res) {
 
 async function editWorkout(req, res) {
   const { log_id } = req.params;
-  const { exercise_name, sets, reps, weight } = req.body; // Use exercise_name instead of exercise_id
+  const { sets, reps, weight } = req.body; // Only update sets, reps, and weight
   const user_id = req.user_id;
 
   try {
-    // Fetch exercise_id based on exercise_name
-    const getExerciseSQL = `SELECT exercise_id FROM exercises WHERE exercise_name = $1`;
-    const exerciseResult = await database.query(getExerciseSQL, [
-      exercise_name,
+    // Check if the workout log exists and belongs to the user
+    const checkWorkoutSQL = `SELECT * FROM workout_logs WHERE log_id = $1 AND user_id = $2`;
+    const checkResult = await database.query(checkWorkoutSQL, [
+      log_id,
+      user_id,
     ]);
 
-    let exercise_id;
-
-    if (exerciseResult.rows.length === 0) {
-      // If the exercise does not exist, create a new one
-      const createExerciseSQL = `INSERT INTO exercises (exercise_name) VALUES ($1) RETURNING exercise_id`;
-      const newExercise = await database.query(createExerciseSQL, [
-        exercise_name,
-      ]);
-      exercise_id = newExercise.rows[0].exercise_id;
-    } else {
-      exercise_id = exerciseResult.rows[0].exercise_id;
+    // If no workout log is found, return a 404 error
+    if (checkResult.rows.length === 0) {
+      console.error('Workout not found or unauthorized access:', {
+        log_id,
+        user_id,
+      });
+      return res
+        .status(404)
+        .json({ message: 'Workout not found or not authorized.' });
     }
 
-    // Update the workout log using exercise_id
-    const editWorkoutSQL = `
-            UPDATE workout_logs
-            SET exercise_id = $1, sets = $2, reps = $3, weight = $4
-            WHERE log_id = $5 AND user_id = $6
-            RETURNING *;
-        `;
+    // Extract the existing exercise_id from the current workout log
+    const existingWorkout = checkResult.rows[0];
+    const exercise_id = existingWorkout.exercise_id;
 
+    // Log the current workout data before updating
+    console.log('Current Workout Data:', existingWorkout);
+
+    // Update the workout log with the new sets, reps, and weight
+    const editWorkoutSQL = `
+      UPDATE workout_logs
+      SET sets = $1, reps = $2, weight = $3
+      WHERE log_id = $4 AND user_id = $5
+      RETURNING *;
+    `;
+
+    // Execute the update query with the provided data
     const resDB = await database.query(editWorkoutSQL, [
-      exercise_id,
       sets,
       reps,
       weight,
@@ -121,18 +127,24 @@ async function editWorkout(req, res) {
     ]);
     const updatedWorkout = resDB.rows[0];
 
+    // Check if the update was successful
     if (!updatedWorkout) {
-      return res
-        .status(404)
-        .json({ message: 'Workout not found or not authorized.' });
+      console.error('Failed to update workout log:', { log_id, user_id });
+      return res.status(400).json({ message: 'Failed to update workout.' });
     }
 
+    // Log the updated workout data
+    console.log('Updated Workout Data:', updatedWorkout);
+
+    // Return the updated workout data in the response
     res.status(200).json({ updatedWorkout });
   } catch (error) {
-    console.error('Error editing workout:', error);
+    // Log the full error stack for detailed analysis
+    console.error('Error editing workout:', error.stack);
     res.status(500).json({ message: 'Server error, please try again later' });
   }
 }
+
 
 
 async function deleteWorkout(req, res) {
