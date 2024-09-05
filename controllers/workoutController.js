@@ -79,26 +79,61 @@ async function getWorkouts(req, res) {
 
 
 async function editWorkout(req, res) {
-    const { log_id } = req.params;
-    const { exercise_id, sets, reps, weight } = req.body;
-    const user_id = req.user_id;
+  const { log_id } = req.params;
+  const { exercise_name, sets, reps, weight } = req.body; // Use exercise_name instead of exercise_id
+  const user_id = req.user_id;
 
-    const editWorkoutSQL = `
-        UPDATE workout_logs
-        SET exercise_id = $1, sets = $2, reps = $3, weight = $4
-        WHERE log_id = $5 AND user_id = $6
-        RETURNING *;
-    `;
+  try {
+    // Fetch exercise_id based on exercise_name
+    const getExerciseSQL = `SELECT exercise_id FROM exercises WHERE exercise_name = $1`;
+    const exerciseResult = await database.query(getExerciseSQL, [
+      exercise_name,
+    ]);
 
-    try {
-        const resDB = await database.query(editWorkoutSQL, [exercise_id, sets, reps, weight, log_id, user_id]);
-        const updatedWorkout = resDB.rows[0];
-        res.status(200).json({ updatedWorkout });
-    } catch (error) {
-        console.error('Error editing workout:', error);
-        res.status(500).json({ message: 'Server error, please try again later' });
+    let exercise_id;
+
+    if (exerciseResult.rows.length === 0) {
+      // If the exercise does not exist, create a new one
+      const createExerciseSQL = `INSERT INTO exercises (exercise_name) VALUES ($1) RETURNING exercise_id`;
+      const newExercise = await database.query(createExerciseSQL, [
+        exercise_name,
+      ]);
+      exercise_id = newExercise.rows[0].exercise_id;
+    } else {
+      exercise_id = exerciseResult.rows[0].exercise_id;
     }
+
+    // Update the workout log using exercise_id
+    const editWorkoutSQL = `
+            UPDATE workout_logs
+            SET exercise_id = $1, sets = $2, reps = $3, weight = $4
+            WHERE log_id = $5 AND user_id = $6
+            RETURNING *;
+        `;
+
+    const resDB = await database.query(editWorkoutSQL, [
+      exercise_id,
+      sets,
+      reps,
+      weight,
+      log_id,
+      user_id,
+    ]);
+    const updatedWorkout = resDB.rows[0];
+
+    if (!updatedWorkout) {
+      return res
+        .status(404)
+        .json({ message: 'Workout not found or not authorized.' });
+    }
+
+    res.status(200).json({ updatedWorkout });
+  } catch (error) {
+    console.error('Error editing workout:', error);
+    res.status(500).json({ message: 'Server error, please try again later' });
+  }
 }
+
 
 async function deleteWorkout(req, res) {
     const { log_id } = req.params;
