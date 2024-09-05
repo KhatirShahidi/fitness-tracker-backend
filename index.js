@@ -3,6 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import routes from "./routes/routes.js";
 
+var corsOptions = {
+  origin: '*',
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -14,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS with default settings
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Basic GET route
 app.get("/", (req, res) => {
